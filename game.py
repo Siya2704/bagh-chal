@@ -22,9 +22,9 @@ def get_coord():
 def moves(cur_pos):
 	x = cur_pos[0];y = cur_pos[1]
 	#left, right, up, down
-	pos = [(-125,0),(125,0),(0,-125),(0,125)]
+	pos = [(-125,0),(125,0),(0,-125),(0,125),(-125,-125),(-125,125),(125,-125),(125,125)]
 	pos_n = []
-	for i in range(4):
+	for i in range(8):
 		xn = x + pos[i][0];yn = x + pos[i][1]
 		pos_n.append((xn,yn))
 	return pos_n
@@ -72,7 +72,7 @@ while not done:
 				pass
 			else:
 				move = moves(cd)
-				for i in range(4):
+				for i in range(8):
 					print(move[i], cu)
 					a1 = coord[cu[0]][cu[1]]
 					a2 = coord[cd[0]][cd[1]]
