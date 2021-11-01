@@ -19,13 +19,14 @@ def get_coord():
 	occupied = [['-' for col in range(5)] for row in range(5)]
 	return coord,occupied
 
-def moves(cur_pos):
+def moves(cur_pos,coord):
 	x = cur_pos[0];y = cur_pos[1]
 	#left, right, up, down
 	pos = [(-125,0),(125,0),(0,-125),(0,125),(-125,-125),(-125,125),(125,-125),(125,125)]
 	pos_n = []
+	c = coord[x][y]
 	for i in range(8):
-		xn = x + pos[i][0];yn = x + pos[i][1]
+		xn = c[0] + pos[i][0];yn = c[1] + pos[i][1]
 		pos_n.append((xn,yn))
 	return pos_n
 	
@@ -68,19 +69,18 @@ while not done:
 		elif event.type == pygame.MOUSEBUTTONUP:
 			dragging = False
 			cu = get_mouse_click(coord, occupied)
-			if (cd[0]==-1 and cd[1] == -1 and cu[0]==-1 and cu[1] == -1):
+			if ((cd[0]==-1 and cd[1] == -1) or (cu[0]==-1 and cu[1] == -1)):
 				pass
 			else:
-				move = moves(cd)
+				a1 = coord[cu[0]][cu[1]]
+				#a2 = coord[cd[0]][cd[1]]
+				move = moves(cd, coord)
 				for i in range(8):
-					print(move[i], cu)
-					a1 = coord[cu[0]][cu[1]]
-					a2 = coord[cd[0]][cd[1]]
 					a3 = move[i]
-					if(a1[0]==a2[0]+a3[0] and a1[1]==a2[1]+a3[1] and occupied[cu[0]][cu[1]] == '-'):
-						print("ok")
+					if(a1[0]==a3[0] and a1[1]==a3[1] and occupied[cu[0]][cu[1]] == '-'):
 						occupied[cu[0]][cu[1]] = 'T';
 						occupied[cd[0]][cd[1]] = '-';
+						break
 
 	pygame.display.flip()
 	
