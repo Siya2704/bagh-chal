@@ -1,7 +1,5 @@
 import pygame
 import sys,time
-sys.setrecursionlimit(100000)
-INF = 1e6
 pygame.init()
 screen = pygame.display.set_mode((1300,900))
 color = (255,204,153)
@@ -109,9 +107,27 @@ def all_tiger_moves(arr):
 		for j in range(5):
 			if(arr[i][j] == 'T'):
 				m = moves((i,j),coord,0)
-				kill = m[2]
-				pos_tiger.append((i,j,kill))
+				for k in m[1]:
+					pos_tiger.append(((i,j),k))
 	return pos_tiger
+
+#all possible moves of goat
+def goat_moves(arr):
+	pos_goat = []
+	for i in range(5):
+		for j in range(5):
+			if(arr[i][j] == '-'):
+				pos_goat.append((i,j))
+	return pos_goat
+
+def evaluate_kill(arr):
+	kill = 0
+	for i in range(5):
+		for j in range(5):
+			if(arr[i][j] == 'T'):
+				m = moves((i,j),coord,0)
+				kill += m[2]
+	return kill
 
 def goal(kill):
 	return kill == 5
@@ -139,27 +155,33 @@ def movable_tiger(arr):
 	
 #this will return minimum score for min(goat)
 def minimax(arr,depth,isMax) :
-	if(depth == 9):
-		return 0
+	if(depth == 3):
+		return evaluate_kill(arr)+movable_tiger(arr)
 
 	if (isMoveLeft(arr) == False) :
 		return 0
 
 	if (isMax) :
 		#tiger
-		best = 0
 		pos_tiger = all_tiger_moves(arr)
-		print(pos_tiger)
 		for i in pos_tiger:
-			kill = i[2]
-			best = max(best,kill)
-		best = max(best+movable_tiger(arr),minimax(arr,depth+1,not isMax))  #+minimize its blocking
+			old = i[0];new = i[1]
+			arr[old[0]][old[1]] = '-'
+			arr[new[0]][new[1]] = 'T'
+			best = evaluate_kill(arr)++movable_tiger(arr)
+			best = max(best,minimax(arr,depth+1,not isMax))  #+minimize its blocking
+			arr[old[0]][old[1]] = 'T'
+			arr[new[0]][new[1]] = '-'#+movable_tiger(arr)
 		print("1st", best)
 		return best
 
 	else :#goat
-		best =  100
-		best = min(best,minimax(arr,depth+1,not isMax)+movable_tiger(arr))  #+maximize its blocking
+		best =  evaluate_kill(arr)
+		moves = goat_moves(arr)
+		for m in moves:
+			arr[m[0]][m[1]] = 'G'
+			best = min(best,minimax(arr,depth+1,not isMax))  #+maximize its blocking
+			arr[m[0]][m[1]] = '-'
 		print("2nd", best)
 		return best
 		
