@@ -1,7 +1,5 @@
 import pygame
-import sys,time
-INF = 1e6
-from copy import deepcopy
+import sys,time,random
 pygame.init()
 screen = pygame.display.set_mode((1300,900))
 color = (255,204,153)
@@ -24,7 +22,7 @@ def get_coord():
 
 	return coord,occupied
 
-def get_moves(cur_pos,coord,kill):
+def moves(cur_pos,coord,kill):
 	x = cur_pos[0];y = cur_pos[1]
 	#left, right, up, down
 	global pos
@@ -36,7 +34,6 @@ def get_moves(cur_pos,coord,kill):
 	pos_n = []
 	pos_t = []
 	c = coord[x][y]
-	d =(x,y)
 	if((c[0]+c[1]) % 2 == 0):
 		pos = pos1
 		co = co1
@@ -64,7 +61,7 @@ def get_moves(cur_pos,coord,kill):
 				pos_t.append((p1,q1))
 				kill = kill + 1
 	#print(pos_n)
-	return pos_n,pos_t,kill,d
+	return pos_n,pos_t,kill
 	
 
 def get_mouse_click(coord, occupied):
@@ -79,7 +76,7 @@ def get_mouse_click(coord, occupied):
 	return (-1,-1)
 
 
-def board(screen,occupied,coord,score,goat_killed,remaining):
+def board(screen,occupied,coord,score,goat_killed,goat_remaining):
 	pygame.draw.rect(screen, (255,255,255), pygame.Rect(90, 90, 1120, 720))
 	screen.blit(img_board,(200,200))#size 500X500
 	label = myfont.render("Score:", 1, (0,0,0))
@@ -93,7 +90,7 @@ def board(screen,occupied,coord,score,goat_killed,remaining):
 	
 	label = myfont.render("Goats Remaining:", 1, (0,0,0))
 	screen.blit(label, (800, 300))
-	sc = myfont.render(str(remaining), 1, (0,0,0))
+	sc = myfont.render(str(goat_remaining), 1, (0,0,0))
 	screen.blit(sc, (1110, 300))
 	for i in range(5):
 		for j in range(5):
@@ -109,7 +106,7 @@ def all_tiger_moves(arr):
 	for i in range(5):
 		for j in range(5):
 			if(arr[i][j] == 'T'):
-				m = get_moves((i,j),coord,0)
+				m = moves((i,j),coord,0)
 				for k in m[1]:
 					pos_tiger.append(((i,j),k))
 	return pos_tiger
@@ -128,9 +125,9 @@ def evaluate_kill(arr):
 	for i in range(5):
 		for j in range(5):
 			if(arr[i][j] == 'T'):
-				m = get_moves((i,j),coord,0)
+				m = moves((i,j),coord,0)
 				kill += m[2]
-	return 12 * kill - 15*movable_tiger(arr)
+	return kill
 
 def goal(kill):
 	return kill == 5
@@ -151,80 +148,147 @@ def movable_tiger(arr):
 			if(arr[i][j] == 'T'):
 				Tiger.append((i,j))
 	for i in Tiger:
-		move = get_moves(i,coord,0)
+		move = moves(i,coord,0)
 		if(len(move[0]) > 0):
 			m_T = m_T + 1
 	return m_T
-	
+				
+
+
 #this will return minimum score for min(goat)
-def minimax(cur_pos,arr,depth,isMax,alpha,beta) :
-	if(depth == 5):
-		return 0,cur_pos,evaluate_kill(arr)
+def minimax(arr,depth,isMax,alpha,beta) :
+	if(depth == 6):
+		return 0
 
 	if (isMoveLeft(arr) == False) :
-		return 0,0,0
-	
-	if (isMax) :#goat
-		best =  -INF
-		moves = goat_moves(arr)
-		bestMove = (-1,-1)
-		for m in moves:
-			arr = deepcopy(arr)
-			arr[m[0]][m[1]] = 'G'
-			eval_ = max(best,minimax(cur_pos,arr,depth+1,not isMax,alpha,beta)[2])
-			if(eval_ > best):
-				best = eval_
-				bestMove = m
-			alpha =max(alpha,best)
-			if(beta <= alpha):
-				break
-		print("2nd", best)
-		return bestMove,0,best
-		
-	else:
-		#tiger
-		pos_n,pos_t,kill,old= get_moves(cur_pos,coord,0)
-		best = INF
-		bestMove = (-1,-1)
-		for i in pos_t:
-			arr = deepcopy(arr)
-			eval_ = min(best,minimax((i[0],i[1]),arr,depth+1,not isMax,alpha,beta)[2])
-			if(eval_ < best):
-				best = eval_
-				bestMove = i
-			beta = min(beta,eval_)
-			if(beta <= alpha):
-				break
-		print("1st", best)
-		return bestMove,old,best
+		return 0
 
-	
-		
+	if (isMax) :
+		#tiger
+		best = evaluate_kill(arr)+movable_tiger(arr)
+		pos_tiger = all_tiger_moves(arr)
+		for i in pos_tiger:
+			old = i[0];new = i[1]
+			arr[old[0]][old[1]] = '-'
+			arr[new[0]][new[1]] = 'T'
+			best = evaluate_kill(arr)+movable_tiger(arr)
+			best = max(best,minimax(arr,depth,not isMax,alpha,beta))
+			alpha = max(alpha,best)
+			if beta <= alpha:
+				arr[old[0]][old[1]] = 'T'
+				arr[new[0]][new[1]] = '-'
+				break
+			arr[old[0]][old[1]] = 'T'
+			arr[new[0]][new[1]] = '-'
+		return best
+
+	else :#goat
+		best =  evaluate_kill(arr)
+		moves = goat_moves(arr)
+		for m in moves:
+			arr[m[0]][m[1]] = 'G'
+			best = min(best,minimax(arr,depth+1,not isMax,alpha,beta))
+			if beta <= alpha:
+				arr[m[0]][m[1]] = '-'
+				break
+			arr[m[0]][m[1]] = '-'
+		return best
+
+def goat_remove(arr):
+	best1,best2,best3,best4 = 100,100,100,100
+	old1,old2,old3,old4 = (-1,-1),(-1,-1),(-1,-1),(-1,-1)
+	for i in range(2):
+		for j in range(3):
+			if(arr[i][j] == 'G'):
+				arr[i][j] = '-'
+				x = movable_tiger(arr)+ evaluate_kill(arr)
+				if(x < best1):
+					best1 = x
+					old1=(i,j)
+				arr[i][j] = 'G'
+		for j in range(3,5):
+			if(arr[i][j] == 'G'):
+				arr[i][j] = '-'
+				x = movable_tiger(arr)+ evaluate_kill(arr)
+				if(x < best4):
+					best4 = x
+					old4=(i,j)
+				arr[i][j] = 'G'
+		if(best4 < best1):
+			best1 = best4
+			old1 = old4
+	for i in range(2,5):
+		for j in range(3):
+			if(arr[i][j] == 'G'):
+				arr[i][j] = '-'
+				x = movable_tiger(arr)+ evaluate_kill(arr)
+				if(x < best2):
+					best2 = x
+					old2=(i,j)
+				arr[i][j] = 'G'
+		for j in range(3,5):
+			if(arr[i][j] == 'G'):
+				arr[i][j] = '-'
+				x = movable_tiger(arr)+ evaluate_kill(arr)
+				if(x < best3):
+					best3 = x
+					old3=(i,j)
+				arr[i][j] = 'G'
+		if(best3 <= best2):
+			best2 = best3
+			old2 = old3
+	if(best1 < best2):
+		best2 = best1
+		old2 = old1
+	return old2
+			
 #it will chooose bestMove and return
-def findBestMove(arr,kill) :
-	bestVal = 1000
-	old_pos = (-1, -1); new_pos = (-1, -1)
-	for i in range(5):
+def findBestMove(arr,kill,goat_remain) :
+	bestVal1,bestVal2= 1000,1000
+	bestMove1,bestMove2= (-1, -1), (-1, -1)
+	for i in range(3):
 		for j in range(5):
-			if(arr[i][j] == 'T'):
-				alpha = -INF
-				beta = INF
-				print(movable_tiger(arr),evaluate_kill(arr))
-				new,old,moveVal = minimax((i,j),arr, 0, False,alpha,beta)
-				if(moveVal < bestVal):
-					bestVal = moveVal
-					old_pos = old
-					new_pos = new
+			if(arr[i][j] == '-'):
+				occupied[i][j] = 'G'
+				alpha = evaluate_kill(arr)+movable_tiger(arr)
+				beta = evaluate_kill(arr)
+				moveVal = minimax(arr, 0, False,alpha,beta)
+				if(moveVal <= bestVal1):
+					bestVal1 = moveVal
+					bestMove1 = (i,j)
+				occupied[i][j] = '-'
+	for i in range(3,5):
+		for j in range(5):
+			if(arr[i][j] == '-'):
+				occupied[i][j] = 'G'
+				alpha = evaluate_kill(arr)+movable_tiger(arr)
+				beta = evaluate_kill(arr)
+				moveVal = minimax(arr, 0, False,alpha,beta)
+				if(moveVal < bestVal2):
+					bestVal2 = moveVal
+					bestMove2 = (i,j)
+				occupied[i][j] = '-'
+	if(bestVal1 <= bestVal2):
+		bestVal2 = bestVal1
+		bestMove2 = bestMove1
+	
+	if goat_remain == False:
+		old = goat_remove(arr)
+		occupied[old[0]][old[1]] = '-'
 				
-	print("The value of the best Move is :", moveVal)
-	print()
-	return old_pos,new_pos
+	return bestMove2
 
 		  
 def solve():
 	coord,occupied = get_coord()
 	occupied[0][4] = 'T';occupied[4][0] = 'T';
 	occupied[0][0]  ='T';occupied[4][4] = 'T';
+	moves_left=10 #used when goats_remaining=0
+	g = [(2,0),(0,2),(2,2),(4,2),(2,4)]
+	i = random.randint(0,5)
+	i = g[i]
+	print(i)
+	occupied[i[0]][i[1]] = 'G'
 	done = False
 	kill = 0
 	flag = 1
@@ -237,67 +301,62 @@ def solve():
 		board(screen,occupied,coord,score,kill,goat_remaining)
 		if(goal(kill)):
 			myfont = pygame.font.SysFont("Comic Sans MS", 150)
-			label = myfont.render("You Lost!!", 1, (255,0,0))
-			screen.blit(label, (710, 400))
-			done = True
-			pygame.display.flip()
-			time.sleep(5)
-		elif(movable_tiger(occupied) == 0):
-			myfont = pygame.font.SysFont("Comic Sans MS", 150)
 			label = myfont.render("You Won!!", 1, (255,0,0))
 			screen.blit(label, (710, 400))
 			done = True
 			pygame.display.flip()
 			time.sleep(5)
-		if(flag == 0):
-			#print("Tiger")
-			occupied1 = deepcopy(occupied)
-			old_pos,new_pos = findBestMove(occupied,kill)
+		elif(movable_tiger(occupied) == 0 or moves_left == 0):
+			myfont = pygame.font.SysFont("Comic Sans MS", 150)
+			label = myfont.render("You Lost!!", 1, (255,0,0))
+			screen.blit(label, (710, 400))
+			done = True
+			pygame.display.flip()
+			time.sleep(5)
+		elif(flag == 0 and goat_remaining != 0):
+			bestMove = findBestMove(occupied,kill,True)
 			#print(bestMove)
-			occupied[old_pos[0]][old_pos[1]] = '-'
-			occupied[new_pos[0]][new_pos[1]] = 'T'
-			if(abs(old_pos[0] - new_pos[0]) == 2  or abs(old_pos[1]-new_pos[1]) == 2):#kill goat
-				if((old_pos[0] - new_pos[0] == 2) and (old_pos[1] - new_pos[1] == 2)):
-					occupied[new_pos[0]+1][new_pos[1]+1] = '-'
-				elif((old_pos[0] - new_pos[0] == 2) and (new_pos[1] - old_pos[1] == 2)):
-					occupied[new_pos[0]+1][new_pos[1]-1] = '-'
-				elif((new_pos[0] - old_pos[0] == 2) and (old_pos[1] - new_pos[1] == 2)):
-					occupied[new_pos[0]-1][new_pos[1]+1] = '-'
-				elif((new_pos[0] - old_pos[0] == 2) and (new_pos[1] - old_pos[1] == 2)):
-					occupied[new_pos[0]-1][new_pos[1]-1] = '-'
-				elif(old_pos[0] - new_pos[0] == 2):
-					occupied[new_pos[0]+1][new_pos[1]] = '-'
-				elif(new_pos[0] - old_pos[0] == 2):
-					occupied[new_pos[0]-1][new_pos[1]] = '-'
-				elif(old_pos[1] - new_pos[1] == 2):
-					occupied[new_pos[1]][new_pos[1]+1] = '-'
-				elif(new_pos[1] - old_pos[1] == 2):
-					occupied[new_pos[0]][new_pos[1]-1] = '-'
-				kill = kill + 1
+			time.sleep(0.03)
+			occupied[bestMove[0]][bestMove[1]] = 'G'
+			goat_remaining -= 1
+			flag = 1
+		elif(flag == 0 and goat_remaining == 0):
+			moves_left -= 1
+			bestMove = findBestMove(occupied,kill,False)
+			#print(bestMove)
+			occupied[bestMove[0]][bestMove[1]] = 'G'
 			flag = 1
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				done = True
-			elif event.type == pygame.MOUSEBUTTONDOWN and goat_remaining != 0:
-				cd = get_mouse_click(coord, occupied)
-				#if(occupied[cd[0]][cd[1]] == '-'):
-				occupied[cd[0]][cd[1]] = 'G';
-				goat_remaining = goat_remaining - 1
-				flag = 0#next computer's move
-				break
-			elif event.type == pygame.MOUSEBUTTONDOWN and goat_remaining == 0:	
+			elif event.type == pygame.MOUSEBUTTONDOWN:	
 				cd = get_mouse_click(coord, occupied)
 				dragging = True
-			elif event.type == pygame.MOUSEBUTTONUP and goat_remaining == 0:
+			elif event.type == pygame.MOUSEBUTTONUP:
 				dragging = False
 				cu = get_mouse_click(coord, occupied)
 				if ((cd[0]==-1 and cd[1] == -1) or (cu[0]==-1 and cu[1] == -1)):
 					pass
-				elif(occupied[cd[0]][cd[1]] == 'G' and occupied[cu[0]][cu[1]] == '-'):
-					occupied[cd[0]][cd[1]] = '-'
-					occupied[cu[0]][cu[1]] = 'G'
-				flag = 0#next computer's move
-				break
+				else:
+					a1 = coord[cu[0]][cu[1]]
+					move = moves(cd, coord,kill)
+					a2 = coord[cd[0]][cd[1]]
+					#print("Tiger")
+					for i in range(len(move[0])):
+						a3 = move[0][i]
+						if(a1[0]==a3[0] and a1[1]==a3[1]):
+							if(125 <=abs(a1[0] - a2[0])<=250  or 125<=abs(a1[1]-a2[1])<=250):
+								if(abs(a1[0] - a2[0]) == 250  or abs(a1[1]-a2[1]) == 250):#kill goat
+									kill = kill + 1
+									score += 100
+									#print(co[a3[2]])
+									p = cd[0]+co[a3[2]][0]
+									q = cd[1]+co[a3[2]][1]
+									occupied[p][q] = '-'
+							occupied[cu[0]][cu[1]] = 'T';
+							occupied[cd[0]][cd[1]] = '-';
+							flag = 0#next computer's move
+							break
 
 						
 		pygame.display.flip()
