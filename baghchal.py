@@ -79,19 +79,27 @@ def get_mouse_click(coord, occupied):
 def board(screen,occupied,coord,score,goat_killed,goat_remaining):
 	pygame.draw.rect(screen, (255,255,255), pygame.Rect(90, 90, 1120, 720))
 	screen.blit(img_board,(200,200))#size 500X500
-	label = myfont.render("Score:", 1, (0,0,0))
-	screen.blit(label, (800, 200))
+	label = myfont.render("Your Score:", 1, (0,0,0))
+	screen.blit(label, (800, 400))
 	sc = myfont.render(str(score), 1, (0,0,0))
-	screen.blit(sc, (920, 200))
+	screen.blit(sc, (1000, 400))
 	label = myfont.render("Goats Killed:", 1, (0,0,0))
-	screen.blit(label, (800, 250))
+	screen.blit(label, (800, 450))
 	sc = myfont.render(str(goat_killed), 1, (0,0,0))
-	screen.blit(sc, (1030, 250))
+	screen.blit(sc, (1030, 450))
 	
 	label = myfont.render("Goats Remaining:", 1, (0,0,0))
-	screen.blit(label, (800, 300))
+	screen.blit(label, (800, 500))
 	sc = myfont.render(str(goat_remaining), 1, (0,0,0))
-	screen.blit(sc, (1110, 300))
+	screen.blit(sc, (1110, 500))
+	font = pygame.font.SysFont("Comic Sans MS", 50)
+	label = font.render("You", 1, (0,0,255))
+	screen.blit(label, (800, 320))
+	screen.blit(img_tiger,(800,260))
+	font = pygame.font.SysFont("Comic Sans MS", 50)
+	label = font.render("computer", 1, (0,0,255))
+	screen.blit(label, (950, 320))
+	screen.blit(img_goat,(950,260))
 	for i in range(5):
 		for j in range(5):
 			if(occupied[i][j] == 'T'):
@@ -348,7 +356,7 @@ def solve():
 							if(125 <=abs(a1[0] - a2[0])<=250  or 125<=abs(a1[1]-a2[1])<=250):
 								if(abs(a1[0] - a2[0]) == 250  or abs(a1[1]-a2[1]) == 250):#kill goat
 									kill = kill + 1
-									score += 100
+									score += 12 - (4 - movable_tiger(occupied))*3
 									#print(co[a3[2]])
 									p = cd[0]+co[a3[2]][0]
 									q = cd[1]+co[a3[2]][1]
@@ -365,3 +373,4 @@ def main():
 	solve()
 if __name__ == "__main__":
 	main()
+
