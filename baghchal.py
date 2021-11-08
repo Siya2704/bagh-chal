@@ -60,7 +60,7 @@ def moves(cur_pos,coord,kill):
 				pos_n.append((xn,yn,i))
 				pos_t.append((p1,q1))
 				kill = kill + 1
-	#print(pos_n)
+
 	return pos_n,pos_t,kill
 	
 
@@ -79,27 +79,19 @@ def get_mouse_click(coord, occupied):
 def board(screen,occupied,coord,score,goat_killed,goat_remaining):
 	pygame.draw.rect(screen, (255,255,255), pygame.Rect(90, 90, 1120, 720))
 	screen.blit(img_board,(200,200))#size 500X500
-	label = myfont.render("Your Score:", 1, (0,0,0))
-	screen.blit(label, (800, 400))
+	label = myfont.render("Score:", 1, (0,0,0))
+	screen.blit(label, (800, 200))
 	sc = myfont.render(str(score), 1, (0,0,0))
-	screen.blit(sc, (1000, 400))
+	screen.blit(sc, (920, 200))
 	label = myfont.render("Goats Killed:", 1, (0,0,0))
-	screen.blit(label, (800, 450))
+	screen.blit(label, (800, 250))
 	sc = myfont.render(str(goat_killed), 1, (0,0,0))
-	screen.blit(sc, (1030, 450))
+	screen.blit(sc, (1030, 250))
 	
 	label = myfont.render("Goats Remaining:", 1, (0,0,0))
-	screen.blit(label, (800, 500))
+	screen.blit(label, (800, 300))
 	sc = myfont.render(str(goat_remaining), 1, (0,0,0))
-	screen.blit(sc, (1110, 500))
-	font = pygame.font.SysFont("Comic Sans MS", 50)
-	label = font.render("You", 1, (0,0,255))
-	screen.blit(label, (800, 320))
-	screen.blit(img_tiger,(800,260))
-	font = pygame.font.SysFont("Comic Sans MS", 50)
-	label = font.render("computer", 1, (0,0,255))
-	screen.blit(label, (950, 320))
-	screen.blit(img_goat,(950,260))
+	screen.blit(sc, (1110, 300))
 	for i in range(5):
 		for j in range(5):
 			if(occupied[i][j] == 'T'):
@@ -161,8 +153,6 @@ def movable_tiger(arr):
 			m_T = m_T + 1
 	return m_T
 				
-
-
 #this will return minimum score for min(goat)
 def minimax(arr,depth,isMax,alpha,beta) :
 	if(depth == 6):
@@ -283,7 +273,6 @@ def findBestMove(arr,kill,goat_remain) :
 	if goat_remain == False:
 		old = goat_remove(arr)
 		occupied[old[0]][old[1]] = '-'
-				
 	return bestMove2
 
 		  
@@ -293,9 +282,8 @@ def solve():
 	occupied[0][0]  ='T';occupied[4][4] = 'T';
 	moves_left=10 #used when goats_remaining=0
 	g = [(2,0),(0,2),(2,2),(4,2),(2,4)]
-	i = random.randint(0,5)
+	i = random.randint(0,4)
 	i = g[i]
-	print(i)
 	occupied[i[0]][i[1]] = 'G'
 	done = False
 	kill = 0
@@ -323,7 +311,6 @@ def solve():
 			time.sleep(5)
 		elif(flag == 0 and goat_remaining != 0):
 			bestMove = findBestMove(occupied,kill,True)
-			#print(bestMove)
 			time.sleep(0.03)
 			occupied[bestMove[0]][bestMove[1]] = 'G'
 			goat_remaining -= 1
@@ -331,7 +318,6 @@ def solve():
 		elif(flag == 0 and goat_remaining == 0):
 			moves_left -= 1
 			bestMove = findBestMove(occupied,kill,False)
-			#print(bestMove)
 			occupied[bestMove[0]][bestMove[1]] = 'G'
 			flag = 1
 		for event in pygame.event.get():
@@ -356,7 +342,7 @@ def solve():
 							if(125 <=abs(a1[0] - a2[0])<=250  or 125<=abs(a1[1]-a2[1])<=250):
 								if(abs(a1[0] - a2[0]) == 250  or abs(a1[1]-a2[1]) == 250):#kill goat
 									kill = kill + 1
-									score += 12 - (4 - movable_tiger(occupied))*3
+									score += 100
 									#print(co[a3[2]])
 									p = cd[0]+co[a3[2]][0]
 									q = cd[1]+co[a3[2]][1]
@@ -366,11 +352,9 @@ def solve():
 							flag = 0#next computer's move
 							break
 
-						
 		pygame.display.flip()
 
 def main():
 	solve()
 if __name__ == "__main__":
 	main()
-
