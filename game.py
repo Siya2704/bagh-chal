@@ -1,5 +1,5 @@
 import pygame
-import sys,time
+import sys,time,random
 INF = 1e6
 from copy import deepcopy
 pygame.init()
@@ -161,6 +161,7 @@ def movable_tiger(arr):
 		
 #it will chooose bestMove and return
 def findBestMove(arr) :
+	cn = []
 	for i in range(5):
 		for j in range(5):
 			if(arr[i][j] == 'T'):
@@ -174,10 +175,12 @@ def findBestMove(arr) :
 					return old,new
 				else:
 					if(len(k_l) != 0):
-						old = (i,j)
-						new = k_l[0]
-	
-	return old,new
+						for l in k_l:	
+							cn.append(((i,j),l))
+	length = len(cn)
+	i = random.randint(0,length-1)
+	cn = cn[i]
+	return cn[0],cn[1]
 
 		  
 def solve():
