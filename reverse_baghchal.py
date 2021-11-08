@@ -1,5 +1,5 @@
 import pygame
-import sys,time
+import sys,time,random
 INF = 1e6
 from copy import deepcopy
 pygame.init()
@@ -26,6 +26,7 @@ def get_coord():
 
 def get_moves(cur_pos,coord,kill):
 	x = cur_pos[0];y = cur_pos[1]
+	kill_coord = []
 	#left, right, up, down
 	global pos
 	global co
@@ -63,8 +64,9 @@ def get_moves(cur_pos,coord,kill):
 				pos_n.append((xn,yn,i))
 				pos_t.append((p1,q1))
 				kill = kill + 1
+				kill_coord.append(((x,y),(p1,q1)))
 	#print(pos_n)
-	return pos_n,pos_t,kill,d
+	return pos_n,pos_t,kill,kill_coord
 	
 
 def get_mouse_click(coord, occupied):
@@ -123,15 +125,6 @@ def goat_moves(arr):
 				pos_goat.append((i,j))
 	return pos_goat
 
-def evaluate_kill(arr):
-	kill = 0
-	for i in range(5):
-		for j in range(5):
-			if(arr[i][j] == 'T'):
-				m = get_moves((i,j),coord,0)
-				kill += m[2]
-	return 15*movable_tiger(arr) - 12 * kill
-
 def goal(kill):
 	return kill == 5
 
@@ -141,7 +134,16 @@ def isMoveLeft(arr):
 			if(arr[i][j] == '-'):
 				return True
 	return False
-	
+
+def evaluate_kill(arr):
+	kill = 0
+	for i in range(5):
+		for j in range(5):
+			if(arr[i][j] == 'T'):
+				m = get_moves((i,j),coord,0)
+				kill += m[2]
+	return kill
+
 #it will return all movable tigers
 def movable_tiger(arr):
 	Tiger = []
@@ -156,69 +158,29 @@ def movable_tiger(arr):
 			m_T = m_T + 1
 	return m_T
 	
-#this will return minimum score for min(goat)
-def minimax(cur_pos,arr,depth,isMax,alpha,beta) :
-	if(depth == 5):
-		return 0,cur_pos,evaluate_kill(arr)
-
-	if (isMoveLeft(arr) == False) :
-		return 0,0,0
-	
-	if (isMax) :#goat
-		best =  -INF
-		moves = goat_moves(arr)
-		bestMove = (-1,-1)
-		for m in moves:
-			arr = deepcopy(arr)
-			arr[m[0]][m[1]] = 'G'
-			eval_ = max(best,minimax(cur_pos,arr,depth+1,not isMax,alpha,beta)[2])
-			if(eval_ > best):
-				best = eval_
-				bestMove = m
-			alpha =max(alpha,best)
-			if(beta <= alpha):
-				break
-		print("2nd", best)
-		return bestMove,0,best
-		
-	else:
-		#tiger
-		pos_n,pos_t,kill,old= get_moves(cur_pos,coord,0)
-		best = INF
-		bestMove = (-1,-1)
-		for i in pos_t:
-			arr = deepcopy(arr)
-			eval_ = min(best,minimax((i[0],i[1]),arr,depth+1,not isMax,alpha,beta)[2])
-			if(eval_ < best):
-				best = eval_
-				bestMove = i
-			beta = min(beta,eval_)
-			if(beta <= alpha):
-				break
-		print("1st", best)
-		return bestMove,old,best
-
-	
 		
 #it will chooose bestMove and return
-def findBestMove(arr,kill) :
-	bestVal = 1000
-	old_pos = (-1, -1); new_pos = (-1, -1)
+def findBestMove(arr) :
+	cn = []
 	for i in range(5):
 		for j in range(5):
 			if(arr[i][j] == 'T'):
-				alpha = -INF
-				beta = INF
-				print(movable_tiger(arr),evaluate_kill(arr))
-				new,old,moveVal = minimax((i,j),arr, 0, False,alpha,beta)
-				if(moveVal < bestVal):
-					bestVal = moveVal
-					old_pos = old
-					new_pos = new
-				
-	print("The value of the best Move is :", moveVal)
-	print()
-	return old_pos,new_pos
+				k = get_moves((i,j),coord,0)[2]
+				k_l = get_moves((i,j),coord,0)[1]
+				k_c = get_moves((i,j),coord,0)[3]
+				if(k != 0):
+					x = k_c[0]
+					old = x[0]
+					new = x[1]
+					return old,new
+				else:
+					if(len(k_l) != 0):
+						for l in k_l:	
+							cn.append(((i,j),l))
+	length = len(cn)
+	i = random.randint(0,length-1)
+	cn = cn[i]
+	return cn[0],cn[1]
 
 		  
 def solve():
@@ -252,7 +214,7 @@ def solve():
 		if(flag == 0):
 			#print("Tiger")
 			occupied1 = deepcopy(occupied)
-			old_pos,new_pos = findBestMove(occupied,kill)
+			old_pos,new_pos = findBestMove(occupied)
 			#print(bestMove)
 			occupied[old_pos[0]][old_pos[1]] = '-'
 			occupied[new_pos[0]][new_pos[1]] = 'T'
