@@ -1,3 +1,5 @@
+
+
 import pygame
 import sys,time,random
 INF = 1e6
@@ -85,18 +87,24 @@ def board(screen,occupied,coord,score,goat_killed,remaining):
 	pygame.draw.rect(screen, (255,255,255), pygame.Rect(90, 90, 1120, 720))
 	screen.blit(img_board,(200,200))#size 500X500
 	label = myfont.render("Score:", 1, (0,0,0))
-	screen.blit(label, (800, 200))
+	screen.blit(label, (800, 350))
 	sc = myfont.render(str(score), 1, (0,0,0))
-	screen.blit(sc, (920, 200))
+	screen.blit(sc, (920, 350))
 	label = myfont.render("Goats Killed:", 1, (0,0,0))
-	screen.blit(label, (800, 250))
+	screen.blit(label, (800, 400))
 	sc = myfont.render(str(goat_killed), 1, (0,0,0))
-	screen.blit(sc, (1030, 250))
+	screen.blit(sc, (1030, 400))
 	
 	label = myfont.render("Goats Remaining:", 1, (0,0,0))
-	screen.blit(label, (800, 300))
+	screen.blit(label, (800, 450))
 	sc = myfont.render(str(remaining), 1, (0,0,0))
-	screen.blit(sc, (1110, 300))
+	screen.blit(sc, (1110, 450))
+	label = myfont.render("You", 1, (0,0,255))
+	screen.blit(label, (800, 260))
+	screen.blit(img_goat, (800, 200))
+	label = myfont.render("Computer", 1, (0,0,255))
+	screen.blit(label, (960, 260))
+	screen.blit(img_tiger, (980, 195))
 	for i in range(5):
 		for j in range(5):
 			if(occupied[i][j] == 'T'):
@@ -236,6 +244,7 @@ def solve():
 				elif(new_pos[1] - old_pos[1] == 2):
 					occupied[new_pos[0]][new_pos[1]-1] = '-'
 				kill = kill + 1
+				score = score + 3 * (4 - movable_tiger(occupied)) - 12 *1
 			flag = 1
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -268,3 +277,5 @@ def main():
 	solve()
 if __name__ == "__main__":
 	main()
+
+ 
