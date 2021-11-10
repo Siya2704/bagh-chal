@@ -374,16 +374,16 @@ def solve():
 		time.sleep(1)
 		board(screen,occupied,coord,score,kill,goat_remaining)
 		if(goal(kill)):
-			myfont = pygame.font.SysFont("Comic Sans MS", 150)
+			myfont = pygame.font.SysFont("Comic Sans MS", 120)
 			label = myfont.render("Tiger Won!!", 1, (255,0,0))
-			screen.blit(label, (710, 400))
+			screen.blit(label, (710, 600))
 			done = True
 			pygame.display.flip()
 			time.sleep(5)
 		elif(movable_tiger(occupied) == 0 or moves_left == 0):
-			myfont = pygame.font.SysFont("Comic Sans MS", 150)
+			myfont = pygame.font.SysFont("Comic Sans MS", 120)
 			label = myfont.render("Goat Won!!", 1, (255,0,0))
-			screen.blit(label, (710, 400))
+			screen.blit(label, (710, 600))
 			done = True
 			pygame.display.flip()
 			time.sleep(5)
